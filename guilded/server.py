@@ -71,6 +71,7 @@ from .utils import ISO8601, MISSING, get
 if TYPE_CHECKING:
     from .types.server import Server as ServerPayload
 
+    from .category import Category
     from .emote import Emote
     from .flowbot import FlowBot
     from .permissions import Permissions
@@ -152,6 +153,7 @@ class Server(Hashable):
         else:
             self.type = None
 
+        self._categories: Dict[str, Category] = {}
         self._channels: Dict[str, ServerChannel] = {}
         self._threads: Dict[str, Thread] = {}
         self._groups: Dict[str, Group] = {}
@@ -419,6 +421,10 @@ class Server(Hashable):
         """Optional[:class:`~guilded.Group`]: Get a group by its ID from the cache."""
         return self._groups.get(group_id)
 
+    def get_category(self, category_id: int, /) -> Optional[Category]:
+        """Optional[:class:`.Category`]: Get a category by its ID from the cache."""
+        return self._categories.get(category_id)
+
     def get_channel(self, channel_id: str, /) -> Optional[ServerChannel]:
         """Optional[:class:`~.abc.ServerChannel`]: Get a channel by its ID from the cache."""
         return self._channels.get(channel_id)
@@ -447,6 +453,43 @@ class Server(Hashable):
         """
         await self._state.kick_member(self.id, '@me')
 
+    async def create_category(
+        self,
+        name: str,
+        *,
+        group: Group = None,
+    ) -> Category:
+        """|coro|
+
+        Create a new category in the server.
+
+        .. versionadded:: 1.11
+
+        Parameters
+        -----------
+        name: :class:`str`
+            The category's name.
+        group: Optional[:class:`~guilded.Group`]
+            The :class:`~guilded.Group` to create the category in.
+            If not provided, defaults to the base group.
+
+        Returns
+        --------
+        :class:`.Category`
+            The created category.
+        """
+
+        from .category import Category
+
+        data = await self._state.create_category(
+            self.id,
+            name=name,
+            group_id=group.id if group is not None else None,
+        )
+        return Category(state=self._state, data=data['category'], group=group, server=self)
+
+    create_category_channel = create_category
+
     async def _create_channel(
         self,
         content_type: ChannelType,
@@ -455,7 +498,7 @@ class Server(Hashable):
         topic: str = None,
         visibility: ChannelVisibility = None,
         public: bool = None,
-        category: ServerChannel = None,
+        category: Category = None,
         group: Group = None,
     ) -> ServerChannel:
 
@@ -481,7 +524,7 @@ class Server(Hashable):
         topic: str = None,
         visibility: ChannelVisibility = None,
         public: bool = None,
-        category: ServerChannel = None,
+        category: Category = None,
         group: Group = None,
     ) -> AnnouncementChannel:
         """|coro|
@@ -494,8 +537,8 @@ class Server(Hashable):
             The channel's name. Can include spaces.
         topic: :class:`str`
             The channel's topic.
-        category: :class:`.CategoryChannel`
-            The :class:`.CategoryChannel` to create this channel under. If not
+        category: :class:`.Category`
+            The :class:`.Category` to create this channel under. If not
             provided, it will be shown under the "Channels" header in the
             client (no category).
         visibility: :class:`.ChannelVisibility`
@@ -537,7 +580,7 @@ class Server(Hashable):
         topic: str = None,
         visibility: ChannelVisibility = None,
         public: bool = None,
-        category: ServerChannel = None,
+        category: Category = None,
         group: Group = None,
     ) -> ChatChannel:
         """|coro|
@@ -550,8 +593,8 @@ class Server(Hashable):
             The channel's name. Can include spaces.
         topic: :class:`str`
             The channel's topic.
-        category: :class:`.CategoryChannel`
-            The :class:`.CategoryChannel` to create this channel under. If not
+        category: :class:`.Category`
+            The :class:`.Category` to create this channel under. If not
             provided, it will be shown under the "Channels" header in the
             client (no category).
         visibility: :class:`.ChannelVisibility`
@@ -593,7 +636,7 @@ class Server(Hashable):
         topic: str = None,
         visibility: ChannelVisibility = None,
         public: bool = None,
-        category: ServerChannel = None,
+        category: Category = None,
         group: Group = None,
     ) -> ChatChannel:
         """|coro|
@@ -608,8 +651,8 @@ class Server(Hashable):
             The channel's name. Can include spaces.
         topic: :class:`str`
             The channel's topic.
-        category: :class:`.CategoryChannel`
-            The :class:`.CategoryChannel` to create this channel under. If not
+        category: :class:`.Category`
+            The :class:`.Category` to create this channel under. If not
             provided, it will be shown under the "Channels" header in the
             client (no category).
         visibility: :class:`.ChannelVisibility`
@@ -649,7 +692,7 @@ class Server(Hashable):
         topic: str = None,
         visibility: ChannelVisibility = None,
         public: bool = None,
-        category: ServerChannel = None,
+        category: Category = None,
         group: Group = None,
     ) -> DocsChannel:
         """|coro|
@@ -662,8 +705,8 @@ class Server(Hashable):
             The channel's name. Can include spaces.
         topic: :class:`str`
             The channel's topic.
-        category: :class:`.CategoryChannel`
-            The :class:`.CategoryChannel` to create this channel under. If not
+        category: :class:`.Category`
+            The :class:`.Category` to create this channel under. If not
             provided, it will be shown under the "Channels" header in the
             client (no category).
         visibility: :class:`.ChannelVisibility`
@@ -705,7 +748,7 @@ class Server(Hashable):
         topic: str = None,
         visibility: ChannelVisibility = None,
         public: bool = None,
-        category: ServerChannel = None,
+        category: Category = None,
         group: Group = None,
     ) -> ForumChannel:
         """|coro|
@@ -718,8 +761,8 @@ class Server(Hashable):
             The channel's name. Can include spaces.
         topic: :class:`str`
             The channel's topic.
-        category: :class:`.CategoryChannel`
-            The :class:`.CategoryChannel` to create this channel under. If not
+        category: :class:`.Category`
+            The :class:`.Category` to create this channel under. If not
             provided, it will be shown under the "Channels" header in the
             client (no category).
         visibility: :class:`.ChannelVisibility`
@@ -761,7 +804,7 @@ class Server(Hashable):
         topic: str = None,
         visibility: ChannelVisibility = None,
         public: bool = None,
-        category: ServerChannel = None,
+        category: Category = None,
         group: Group = None,
     ) -> ForumChannel:
         """|coro|
@@ -776,8 +819,8 @@ class Server(Hashable):
             The channel's name. Can include spaces.
         topic: :class:`str`
             The channel's topic.
-        category: :class:`.CategoryChannel`
-            The :class:`.CategoryChannel` to create this channel under. If not
+        category: :class:`.Category`
+            The :class:`.Category` to create this channel under. If not
             provided, it will be shown under the "Channels" header in the
             client (no category).
         visibility: :class:`.ChannelVisibility`
@@ -817,7 +860,7 @@ class Server(Hashable):
         topic: str = None,
         visibility: ChannelVisibility = None,
         public: bool = None,
-        category: ServerChannel = None,
+        category: Category = None,
         group: Group = None,
     ) -> MediaChannel:
         """|coro|
@@ -830,8 +873,8 @@ class Server(Hashable):
             The channel's name. Can include spaces.
         topic: :class:`str`
             The channel's topic.
-        category: :class:`.CategoryChannel`
-            The :class:`.CategoryChannel` to create this channel under. If not
+        category: :class:`.Category`
+            The :class:`.Category` to create this channel under. If not
             provided, it will be shown under the "Channels" header in the
             client (no category).
         visibility: :class:`.ChannelVisibility`
@@ -873,7 +916,7 @@ class Server(Hashable):
         topic: str = None,
         visibility: ChannelVisibility = None,
         public: bool = None,
-        category: ServerChannel = None,
+        category: Category = None,
         group: Group = None,
     ) -> ListChannel:
         """|coro|
@@ -886,8 +929,8 @@ class Server(Hashable):
             The channel's name. Can include spaces.
         topic: :class:`str`
             The channel's topic.
-        category: :class:`.CategoryChannel`
-            The :class:`.CategoryChannel` to create this channel under. If not
+        category: :class:`.Category`
+            The :class:`.Category` to create this channel under. If not
             provided, it will be shown under the "Channels" header in the
             client (no category).
         visibility: :class:`.ChannelVisibility`
@@ -929,7 +972,7 @@ class Server(Hashable):
         topic: str = None,
         visibility: ChannelVisibility = None,
         public: bool = None,
-        category: ServerChannel = None,
+        category: Category = None,
         group: Group = None,
     ) -> SchedulingChannel:
         """|coro|
@@ -942,8 +985,8 @@ class Server(Hashable):
             The channel's name. Can include spaces.
         topic: :class:`str`
             The channel's topic.
-        category: :class:`.CategoryChannel`
-            The :class:`.CategoryChannel` to create this channel under. If not
+        category: :class:`.Category`
+            The :class:`.Category` to create this channel under. If not
             provided, it will be shown under the "Channels" header in the
             client (no category).
         visibility: :class:`.ChannelVisibility`
@@ -985,7 +1028,7 @@ class Server(Hashable):
         topic: str = None,
         visibility: ChannelVisibility = None,
         public: bool = None,
-        category: ServerChannel = None,
+        category: Category = None,
         group: Group = None,
     ) -> VoiceChannel:
         """|coro|
@@ -998,8 +1041,8 @@ class Server(Hashable):
             The channel's name. Can include spaces.
         topic: :class:`str`
             The channel's topic.
-        category: :class:`.CategoryChannel`
-            The :class:`.CategoryChannel` to create this channel under. If not
+        category: :class:`.Category`
+            The :class:`.Category` to create this channel under. If not
             provided, it will be shown under the "Channels" header in the
             client (no category).
         visibility: :class:`.ChannelVisibility`
@@ -1033,6 +1076,36 @@ class Server(Hashable):
             group=group,
         )
         return channel
+
+    async def fetch_category(self, category_id: int, /) -> Category:
+        """|coro|
+
+        Fetch a category.
+
+        .. versionadded:: 1.11
+
+        Returns
+        --------
+        :class:`.Category`
+            The category from the ID.
+
+        Raises
+        -------
+        HTTPException
+            Retrieving the category failed.
+        NotFound
+            The category to fetch does not exist.
+        Forbidden
+            You do not have permission to fetch this category.
+        """
+
+        from .category import Category
+
+        data = await self._state.get_category(self.id, category_id)
+        return Category(state=self._state, data=data['category'], server=self)
+
+    async def getch_category(self, category_id: int, /) -> Category:
+        return self.get_category(category_id) or await self.fetch_category(category_id)
 
     async def fetch_channel(self, channel_id: str, /) -> ServerChannel:
         """|coro|
@@ -1144,6 +1217,67 @@ class Server(Hashable):
                 continue
             else:
                 self._members[member.id] = member
+
+    async def bulk_award_member_xp(self, amount: int, *members: Member) -> Dict[str, int]:
+        """|coro|
+
+        Bulk award XP to multiple members.
+
+        .. note::
+
+            This method *modifies* the current values.
+            To bulk set total XP, use :meth:`~.bulk_set_member_xp`.
+
+        .. versionadded:: 1.11
+
+        Parameters
+        -----------
+        amount: :class:`int`
+            The amount of XP to award.
+            Could be a negative value to remove XP.
+        members: Tuple[:class:`.Member`]
+            The members to award XP to.
+
+        Returns
+        --------
+        :class:`dict`
+            A mapping of member ID to the total amount of XP they have after
+            the operation.
+        """
+
+        data = await self._state.bulk_award_member_xp(self.id, [m.id for m in members], amount)
+        totals: Dict[str, int] = data['totalsByUserId']
+        return totals
+
+    async def bulk_set_member_xp(self, total: int, *members: Member) -> Dict[str, int]:
+        """|coro|
+
+        Bulk set multiple members' total XP.
+
+        .. note::
+
+            This method *replaces* the current values.
+            To add or subtract XP, use :meth:`.bulk_award_member_xp`.
+
+        .. versionadded:: 1.11
+
+        Parameters
+        -----------
+        total: :class:`int`
+            The total amount of XP each member should have.
+        members: Tuple[:class:`.Member`]
+            The members to set XP for.
+
+        Returns
+        --------
+        :class:`dict`
+            A mapping of member ID to the total amount of XP they have after
+            the operation.
+        """
+
+        data = await self._state.bulk_set_member_xp(self.id, [m.id for m in members], total)
+        totals: Dict[str, int] = data['totalsByUserId']
+        return totals
 
     async def create_role(
         self,

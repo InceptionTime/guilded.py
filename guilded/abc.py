@@ -73,6 +73,7 @@ if TYPE_CHECKING:
     from .types.channel import ServerChannel as ServerChannelPayload
     from .types.comment import ContentComment
 
+    from .category import Category
     from .channel import Thread
     from .embed import Embed
     from .group import Group
@@ -601,6 +602,14 @@ class ServerChannel(Hashable, metaclass=abc.ABCMeta):
         return self.server
 
     @property
+    def category(self) -> Optional[Category]:
+        """Optional[:class:`.Category`]: The category that this channel is in, if any."""
+        if self.category_id and self.server:
+            return self.server.get_category(self.category_id)
+
+        return None
+
+    @property
     def parent(self) -> Optional[ServerChannel]:
         return self.server.get_channel_or_thread(self.parent_id)
 
@@ -627,6 +636,15 @@ class ServerChannel(Hashable, metaclass=abc.ABCMeta):
 
     def __repr__(self) -> str:
         return f'<{self.__class__.__name__} id={self.id!r} name={self.name!r} server={self.server!r}>'
+
+    def is_nsfw(self) -> bool:
+        """:class:`bool`: |dpyattr|
+
+        Always returns ``False``.
+
+        .. versionadded:: 1.11
+        """
+        return False
 
     async def edit(
         self,
@@ -674,12 +692,8 @@ class ServerChannel(Hashable, metaclass=abc.ABCMeta):
 
         if visibility is MISSING and public is not None:
             visibility = ChannelVisibility.public if public else None
-        # There is a bug currently where you cannot unset a channel's
-        # public status without using isPublic
-        if visibility is None:
-            payload['isPublic'] = False
-        elif visibility is not MISSING:
-            payload['visibility'] = visibility.value
+        if visibility is not MISSING:
+            payload['visibility'] = visibility.value if visibility is not None else None
 
         data = await self._state.update_channel(
             self.id,

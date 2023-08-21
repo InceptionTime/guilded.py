@@ -79,6 +79,7 @@ if TYPE_CHECKING:
     from .types.channel import ServerChannel as ServerChannelPayload
 
     from .asset import Asset
+    from .category import Category
     from .channel import DMChannel, Thread
     from .emote import Emote
     from .file import Attachment, File
@@ -260,6 +261,10 @@ class HTTPClientBase:
         if self._get_server(server_id):
             return self._get_server(server_id).get_channel_or_thread(channel_id)
 
+    def _get_server_category(self, server_id: str, category_id: int) -> Optional[Category]:
+        if self._get_server(server_id):
+            return self._get_server(server_id).get_category(category_id)
+
     @property
     def _all_server_channels(self) -> Dict[str, ServerChannel]:
         all_channels = {}
@@ -333,6 +338,15 @@ class HTTPClientBase:
     def remove_from_server_channel_cache(self, server_id, channel_id):
         if self._get_server(server_id):
             self._get_server(server_id)._channels.pop(channel_id, None)
+
+    def add_to_category_cache(self, category: Category):
+        server = category.server or self._get_server(category.server_id)
+        if server:
+            server._categories[category.id] = category
+
+    def remove_from_category_cache(self, server_id: str, category_id: int):
+        if self._get_server(server_id):
+            self._get_server(server_id)._categories.pop(category_id, None)
 
     def add_to_dm_channel_cache(self, channel):
         self._dm_channels[channel.id] = channel
@@ -1014,6 +1028,23 @@ class HTTPClient(HTTPClientBase):
     def get_server(self, server_id: str):
         return self.request(Route('GET', f'/servers/{server_id}'))
 
+    def bulk_award_member_xp(self, server_id: str, user_ids: List[str], amount: int):
+        payload = {
+            'userIds': user_ids,
+            'amount': amount,
+        }
+        return self.request(Route('POST', f'/servers/{server_id}/xp'), json=payload)
+
+    def bulk_set_member_xp(self, server_id: str, user_ids: List[str], total: int):
+        payload = {
+            'userIds': user_ids,
+            'total': total,
+            # There is currently a bug where `total` is ignored and `amount`
+            # is required instead.
+            'amount': total,
+        }
+        return self.request(Route('PUT', f'/servers/{server_id}/xp'), json=payload)
+
     def get_member_roles(self, server_id: str, user_id: str):
         return self.request(Route('GET', f'/servers/{server_id}/members/{user_id}/roles'))
 
@@ -1151,6 +1182,39 @@ class HTTPClient(HTTPClientBase):
 
     def remove_group_member(self, group_id: str, user_id: str):
         return self.request(Route('DELETE', f'/groups/{group_id}/members/{user_id}'))
+
+    # categories
+
+    def create_category(
+        self,
+        server_id: str,
+        *,
+        name: str,
+        group_id: Optional[str] = None,
+    ):
+        payload = {
+            'name': name,
+        }
+
+        if group_id is not None:
+            payload['groupId'] = group_id
+
+        return self.request(Route('POST', f'/servers/{server_id}/categories'), json=payload)
+
+    def update_category(
+        self,
+        server_id: str,
+        category_id: int,
+        *,
+        payload: Dict[str, Any],
+    ):
+        return self.request(Route('PATCH', f'/servers/{server_id}/categories/{category_id}'), json=payload)
+
+    def get_category(self, server_id: str, category_id: int):
+        return self.request(Route('GET', f'/servers/{server_id}/categories/{category_id}'))
+
+    def delete_category(self, server_id: str, category_id: int):
+        return self.request(Route('DELETE', f'/servers/{server_id}/categories/{category_id}'))
 
     # subscriptions
 

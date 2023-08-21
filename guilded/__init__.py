@@ -1,12 +1,13 @@
 
 __copyright__ = 'shay 2020-present'
-__version__ = '1.10.0a'
+__version__ = '1.11.0a'
 
 import logging
 
 from . import abc as abc, utils as utils
 from .utils import Object as Object
 from .asset import *
+from .category import *
 from .channel import *
 from .client import *
 from .colour import *
