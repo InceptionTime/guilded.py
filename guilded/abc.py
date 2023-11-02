@@ -62,6 +62,7 @@ from .enums import ChannelType, ChannelVisibility, try_enum, UserType
 from .errors import InvalidArgument
 from .message import HasContentMixin, ChatMessage
 from .mixins import Hashable
+from .override import ChannelRoleOverride, ChannelUserOverride
 from .presence import Presence
 from .status import Status
 from .utils import ISO8601, MISSING
@@ -77,6 +78,8 @@ if TYPE_CHECKING:
     from .channel import Thread
     from .embed import Embed
     from .group import Group
+    from .permissions import PermissionOverride
+    from .role import Role
     from .server import Server
     from .user import Member
 
@@ -129,6 +132,7 @@ class Messageable(metaclass=abc.ABCMeta):
         silent: Optional[bool] = None,
         private: bool = False,
         delete_after: Optional[float] = None,
+        hide_preview_urls: Optional[Sequence[str]] = MISSING,
     ) -> ChatMessage:
         """|coro|
 
@@ -166,6 +170,8 @@ class Messageable(metaclass=abc.ABCMeta):
         delete_after: :class:`float`
             If provided, the number of seconds to wait in the background before deleting the sent message.
             If the deletion fails, then it is silently ignored.
+        hide_preview_urls: List[:class:`str`]
+            URLs in ``content`` to prevent unfurling as a link preview when displaying in Guilded.
         """
 
         from .http import handle_message_parameters
@@ -180,6 +186,7 @@ class Messageable(metaclass=abc.ABCMeta):
             reply_to=[message.id for message in reply_to] if reply_to is not MISSING else MISSING,
             private=private,
             silent=silent if silent is not None else not mention_author if mention_author is not None else None,
+            hide_preview_urls=hide_preview_urls,
         )
 
         data = await self._state.create_channel_message(
@@ -704,6 +711,244 @@ class ServerChannel(Hashable, metaclass=abc.ABCMeta):
             group=self.group,
         )
         return channel
+
+    async def create_role_override(self, role: Role, override: PermissionOverride) -> ChannelRoleOverride:
+        """|coro|
+
+        Create a role-based permission override in this channel.
+
+        .. versionadded:: 1.11
+
+        Parameters
+        -----------
+        role: :class:`.Role`
+            The role to create an override for.
+        override: :class:`.PermissionOverride`
+            The override values to use.
+
+        Returns
+        --------
+        :class:`.ChannelRoleOverride`
+            The created role override.
+        """
+
+        data = await self._state.create_channel_role_override(
+            self.server_id,
+            self.id,
+            role.id,
+            permissions=override.to_dict(),
+        )
+        return ChannelRoleOverride(data=data['channelRolePermission'], server=self.server)
+
+    async def fetch_role_override(self, role: Role) -> ChannelRoleOverride:
+        """|coro|
+
+        Fetch a role-based permission override in this channel.
+
+        .. versionadded:: 1.11
+
+        Parameters
+        -----------
+        role: :class:`.Role`
+            The role whose override to fetch.
+
+        Returns
+        --------
+        :class:`.ChannelRoleOverride`
+            The role override.
+        """
+
+        data = await self._state.get_channel_role_override(
+            self.server_id,
+            self.id,
+            role.id,
+        )
+        return ChannelRoleOverride(data=data['channelRolePermission'], server=self.server)
+
+    async def fetch_role_overrides(self) -> List[ChannelRoleOverride]:
+        """|coro|
+
+        Fetch all role-based permission overrides in this channel.
+
+        .. versionadded:: 1.11
+
+        Returns
+        --------
+        List[:class:`.ChannelRoleOverride`]
+            The role overrides.
+        """
+
+        data = await self._state.get_channel_role_overrides(self.server_id, self.id)
+        return [
+            ChannelRoleOverride(data=override_data, server=self.server)
+            for override_data in data['channelRolePermissions']
+        ]
+
+    async def update_role_override(self, role: Role, override: PermissionOverride) -> ChannelRoleOverride:
+        """|coro|
+
+        Update a role-based permission override in this channel.
+
+        .. versionadded:: 1.11
+
+        Parameters
+        -----------
+        role: :class:`.Role`
+            The role to update an override for.
+        override: :class:`.PermissionOverride`
+            The new override values to use.
+
+        Returns
+        --------
+        :class:`.ChannelRoleOverride`
+            The updated role override.
+        """
+
+        data = await self._state.update_channel_role_override(
+            self.server_id,
+            self.id,
+            role.id,
+            permissions=override.to_dict(),
+        )
+        return ChannelRoleOverride(data=data['channelRolePermission'], server=self.server)
+
+    async def delete_role_override(self, role: Role) -> None:
+        """|coro|
+
+        Delete a role-based permission override in this channel.
+
+        .. versionadded:: 1.11
+
+        Parameters
+        -----------
+        role: :class:`.Role`
+            The role whose override to delete.
+        """
+
+        await self._state.delete_channel_role_override(
+            self.server_id,
+            self.id,
+            role.id,
+        )
+
+    async def create_user_override(self, user: Member, override: PermissionOverride) -> ChannelUserOverride:
+        """|coro|
+
+        Create a user-based permission override in this channel.
+
+        .. versionadded:: 1.11
+
+        Parameters
+        -----------
+        user: :class:`.Member`
+            The member to create an override for.
+        override: :class:`.PermissionOverride`
+            The override values to use.
+
+        Returns
+        --------
+        :class:`.ChannelUserOverride`
+            The created role override.
+        """
+
+        data = await self._state.create_channel_user_override(
+            self.server_id,
+            self.id,
+            user.id,
+            permissions=override.to_dict(),
+        )
+        return ChannelUserOverride(data=data['channelUserPermission'], server=self.server)
+
+    async def fetch_user_override(self, user: Member) -> ChannelUserOverride:
+        """|coro|
+
+        Fetch a user-based permission override in this channel.
+
+        .. versionadded:: 1.11
+
+        Parameters
+        -----------
+        user: :class:`.Member`
+            The member whose override to fetch.
+
+        Returns
+        --------
+        :class:`.ChannelUserOverride`
+            The role override.
+        """
+
+        data = await self._state.get_channel_user_override(
+            self.server_id,
+            self.id,
+            user.id,
+        )
+        return ChannelUserOverride(data=data['channelUserPermission'], server=self.server)
+
+    async def fetch_user_overrides(self) -> List[ChannelUserOverride]:
+        """|coro|
+
+        Fetch all user-based permission overrides in this channel.
+
+        .. versionadded:: 1.11
+
+        Returns
+        --------
+        List[:class:`.ChannelUserOverride`]
+            The role overrides.
+        """
+
+        data = await self._state.get_channel_user_overrides(self.server_id, self.id)
+        return [
+            ChannelUserOverride(data=override_data, server=self.server)
+            for override_data in data['channelUserPermissions']
+        ]
+
+    async def update_user_override(self, user: Member, override: PermissionOverride) -> ChannelUserOverride:
+        """|coro|
+
+        Update a user-based permission override in this channel.
+
+        .. versionadded:: 1.11
+
+        Parameters
+        -----------
+        user: :class:`.Member`
+            The member to update an override for.
+        override: :class:`.PermissionOverride`
+            The new override values to use.
+
+        Returns
+        --------
+        :class:`.ChannelUserOverride`
+            The updated role override.
+        """
+
+        data = await self._state.update_channel_user_override(
+            self.server_id,
+            self.id,
+            user.id,
+            permissions=override.to_dict(),
+        )
+        return ChannelUserOverride(data=data['channelUserPermission'], server=self.server)
+
+    async def delete_user_override(self, user: Member) -> None:
+        """|coro|
+
+        Delete a user-based permission override in this channel.
+
+        .. versionadded:: 1.11
+
+        Parameters
+        -----------
+        user: :class:`.Member`
+            The member whose override to delete.
+        """
+
+        await self._state.delete_channel_user_override(
+            self.server_id,
+            self.id,
+            user.id,
+        )
 
     async def delete(self) -> None:
         """|coro|

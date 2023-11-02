@@ -47,12 +47,8 @@ class ChatMessage(TypedDict):
     createdBy: str
     createdByWebhookId: NotRequired[str]
     updatedAt: NotRequired[str]
+    hiddenLinkPreviewUrls: NotRequired[List[str]]
 
 
-class DeletedChatMessage(TypedDict):
-    id: str
-    serverId: NotRequired[str]
-    channelId: str
+class DeletedChatMessage(ChatMessage):
     deletedAt: str
-    isPrivate: NotRequired[bool]
-    isPinned: NotRequired[bool]

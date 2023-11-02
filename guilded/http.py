@@ -127,6 +127,7 @@ def handle_message_parameters(
     reply_to: Sequence[str] = MISSING,
     silent: Optional[bool] = None,
     private: Optional[bool] = None,
+    hide_preview_urls: Sequence[str] = MISSING,
 ) -> MultipartParameters:
     if files is not MISSING and file is not MISSING:
         raise TypeError('Cannot mix file and files keyword arguments.')
@@ -163,6 +164,9 @@ def handle_message_parameters(
     if private is not None:
         payload['isPrivate'] = private
 
+    if hide_preview_urls is not MISSING:
+        payload['hiddenLinkPreviewUrls'] = hide_preview_urls
+
     if username:
         payload['username'] = username
 
@@ -174,14 +178,12 @@ def handle_message_parameters(
         multipart.append({'name': 'payload_json', 'value': json.dumps(payload)})
         payload = None
         for index, file in enumerate(files):
-            multipart.append(
-                {
-                    'name': f'files[{index}]',
-                    'value': file.fp,
-                    'filename': file.filename,
-                    'content_type': file.content_type,
-                }
-            )
+            multipart.append({
+                'name': f'files[{index}]',
+                'value': file.fp,
+                'filename': file.filename,
+                'content_type': file.content_type,
+            })
 
     return MultipartParameters(payload=payload, multipart=multipart, files=files)
 
@@ -1159,6 +1161,92 @@ class HTTPClient(HTTPClientBase):
 
     def delete_webhook(self, server_id: str, webhook_id: str):
         return self.request(Route('DELETE', f'/servers/{server_id}/webhooks/{webhook_id}'))
+
+    # permission overrides
+
+    def create_channel_role_override(self, server_id: str, channel_id: str, role_id: int, *, permissions: Dict[str, Optional[bool]]):
+        payload = {
+            'permissions': permissions,
+        }
+        return self.request(Route('POST', f'/servers/{server_id}/channels/{channel_id}/permissions/roles/{role_id}'), json=payload)
+
+    def get_channel_role_override(self, server_id: str, channel_id: str, role_id: int):
+        return self.request(Route('GET', f'/servers/{server_id}/channels/{channel_id}/permissions/roles/{role_id}'))
+
+    def get_channel_role_overrides(self, server_id: str, channel_id: str):
+        return self.request(Route('GET', f'/servers/{server_id}/channels/{channel_id}/permissions/roles'))
+
+    def update_channel_role_override(self, server_id: str, channel_id: str, role_id: int, *, permissions: Dict[str, Optional[bool]]):
+        payload = {
+            'permissions': permissions,
+        }
+        return self.request(Route('PATCH', f'/servers/{server_id}/channels/{channel_id}/permissions/roles/{role_id}'), json=payload)
+
+    def delete_channel_role_override(self, server_id: str, channel_id: str, role_id: int):
+        return self.request(Route('DELETE', f'/servers/{server_id}/channels/{channel_id}/permissions/roles/{role_id}'))
+
+    def create_channel_user_override(self, server_id: str, channel_id: str, user_id: str, *, permissions: Dict[str, Optional[bool]]):
+        payload = {
+            'permissions': permissions,
+        }
+        return self.request(Route('POST', f'/servers/{server_id}/channels/{channel_id}/permissions/users/{user_id}'), json=payload)
+
+    def get_channel_user_override(self, server_id: str, channel_id: str, user_id: str):
+        return self.request(Route('GET', f'/servers/{server_id}/channels/{channel_id}/permissions/users/{user_id}'))
+
+    def get_channel_user_overrides(self, server_id: str, channel_id: str):
+        return self.request(Route('GET', f'/servers/{server_id}/channels/{channel_id}/permissions/users'))
+
+    def update_channel_user_override(self, server_id: str, channel_id: str, user_id: str, *, permissions: Dict[str, Optional[bool]]):
+        payload = {
+            'permissions': permissions,
+        }
+        return self.request(Route('PATCH', f'/servers/{server_id}/channels/{channel_id}/permissions/users/{user_id}'), json=payload)
+
+    def delete_channel_user_override(self, server_id: str, channel_id: str, user_id: str):
+        return self.request(Route('DELETE', f'/servers/{server_id}/channels/{channel_id}/permissions/users/{user_id}'))
+
+    def create_category_role_override(self, server_id: str, category_id: int, role_id: int, *, permissions: Dict[str, Optional[bool]]):
+        payload = {
+            'permissions': permissions,
+        }
+        return self.request(Route('POST', f'/servers/{server_id}/categories/{category_id}/permissions/roles/{role_id}'), json=payload)
+
+    def get_category_role_override(self, server_id: str, category_id: int, role_id: int):
+        return self.request(Route('GET', f'/servers/{server_id}/categories/{category_id}/permissions/roles/{role_id}'))
+
+    def get_category_role_overrides(self, server_id: str, category_id: int):
+        return self.request(Route('GET', f'/servers/{server_id}/categories/{category_id}/permissions/roles'))
+
+    def update_category_role_override(self, server_id: str, category_id: int, role_id: int, *, permissions: Dict[str, Optional[bool]]):
+        payload = {
+            'permissions': permissions,
+        }
+        return self.request(Route('PATCH', f'/servers/{server_id}/categories/{category_id}/permissions/roles/{role_id}'), json=payload)
+
+    def delete_category_role_override(self, server_id: str, category_id: int, role_id: int):
+        return self.request(Route('DELETE', f'/servers/{server_id}/categories/{category_id}/permissions/roles/{role_id}'))
+
+    def create_category_user_override(self, server_id: str, category_id: int, user_id: str, *, permissions: Dict[str, Optional[bool]]):
+        payload = {
+            'permissions': permissions,
+        }
+        return self.request(Route('POST', f'/servers/{server_id}/categories/{category_id}/permissions/users/{user_id}'), json=payload)
+
+    def get_category_user_override(self, server_id: str, category_id: int, user_id: str):
+        return self.request(Route('GET', f'/servers/{server_id}/categories/{category_id}/permissions/users/{user_id}'))
+
+    def get_category_user_overrides(self, server_id: str, category_id: int):
+        return self.request(Route('GET', f'/servers/{server_id}/categories/{category_id}/permissions/users'))
+
+    def update_category_user_override(self, server_id: str, category_id: int, user_id: str, *, permissions: Dict[str, Optional[bool]]):
+        payload = {
+            'permissions': permissions,
+        }
+        return self.request(Route('PATCH', f'/servers/{server_id}/categories/{category_id}/permissions/users/{user_id}'), json=payload)
+
+    def delete_category_user_override(self, server_id: str, category_id: int, user_id: str):
+        return self.request(Route('DELETE', f'/servers/{server_id}/categories/{category_id}/permissions/users/{user_id}'))
 
     # groups
 

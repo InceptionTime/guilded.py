@@ -1,6 +1,6 @@
 
 __copyright__ = 'shay 2020-present'
-__version__ = '1.11.0a'
+__version__ = '1.12.0a'
 
 import logging
 
@@ -21,6 +21,7 @@ from .flowbot import *
 from .group import *
 from .invite import *
 from .message import *
+from .override import *
 from .reply import *
 from .role import *
 from .permissions import *

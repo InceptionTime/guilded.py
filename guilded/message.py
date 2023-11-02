@@ -596,6 +596,15 @@ class ChatMessage(Hashable, HasContentMixin):
         users mentioned in the message were not sent a notification.
     pinned: :class:`bool`
         Whether the message is pinned in its channel.
+    hidden_preview_urls: List[:class:`str`]
+        URLs in ``content`` that have been prevented from unfurling as a link
+        preview when displayed in Guilded.
+    created_at: :class:`datetime.datetime`
+        When the message was created.
+    updated_at: Optional[:class:`datetime.datetime`]
+        When the message was last updated.
+    deleted_at: Optional[:class:`datetime.datetime`]
+        When the message was deleted.
     """
 
     __slots__ = (
@@ -617,6 +626,7 @@ class ChatMessage(Hashable, HasContentMixin):
         'pinned',
         'content',
         'embeds',
+        'hidden_preview_urls',
     )
 
     def __init__(self, *, state, channel: Messageable, data, **extra: Any):
@@ -640,9 +650,11 @@ class ChatMessage(Hashable, HasContentMixin):
         self.webhook_id: Optional[str] = data.get('createdByWebhookId') or data.get('webhookId')
         self._webhook_username: Optional[str] = None
         self._webhook_avatar_url: Optional[str] = None
+        self.hidden_preview_urls: List[str] = data.get('hiddenLinkPreviewUrls') or []
 
         self.created_at: datetime.datetime = ISO8601(data.get('createdAt'))
         self.updated_at: Optional[datetime.datetime] = ISO8601(data.get('updatedAt') or data.get('editedAt'))
+        self.deleted_at: Optional[datetime.datetime] = ISO8601(data.get('deletedAt'))
 
         self.silent: bool = data.get('isSilent') or False
         self.private: bool = data.get('isPrivate') or False
@@ -651,6 +663,10 @@ class ChatMessage(Hashable, HasContentMixin):
         if isinstance(data.get('content'), dict):
             # Webhook execution responses
             self.content: str = self._get_full_content(data['content'])
+            hidden_embed_urls: Optional[Dict[str, bool]] = data['content'].get('document', {}).get('data', {}).get('hiddenEmbedUrls')
+            if hidden_embed_urls:
+                self.hidden_preview_urls = [key for [key, value] in hidden_embed_urls.items() if value]
+
             profile: Optional[Dict[str, str]] = data['content'].get('document', {}).get('data', {}).get('profile')
             if profile:
                 self._webhook_username = profile.get('name')
@@ -793,6 +809,7 @@ class ChatMessage(Hashable, HasContentMixin):
         *,
         embed: Optional[Embed] = MISSING,
         embeds: Optional[Sequence[Embed]] = MISSING,
+        hide_preview_urls: Optional[Sequence[str]] = MISSING,
     ) -> ChatMessage:
         """|coro|
 
@@ -814,6 +831,8 @@ class ChatMessage(Hashable, HasContentMixin):
             A list of embeds in the message.
             At present, this can contain at most 1 value.
             This parameter cannot be meaningfully combined with ``embed``.
+        hide_preview_urls: List[:class:`str`]
+            URLs in ``content`` to prevent unfurling as a link preview when displaying in Guilded.
 
         Returns
         --------
@@ -836,6 +855,7 @@ class ChatMessage(Hashable, HasContentMixin):
             content=content,
             embed=embed,
             embeds=embeds,
+            hide_preview_urls=hide_preview_urls,
         )
 
         data = await self._state.update_channel_message(

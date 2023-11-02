@@ -959,10 +959,6 @@ Messages
 
     |nestype| :class:`MessageDeleteEvent`
 
-    If the style experiment is disabled, then this event is only dispatched if
-    the message was cached before being deleted. If you want to handle message
-    deletions regardless of state, see :func:`.on_raw_message_delete`.
-
     :param message: The message that was deleted.
     :type message: :class:`.Message`
 
@@ -971,6 +967,10 @@ Messages
     |nesnever|
 
     A message was deleted.
+
+    .. deprecated:: 1.11
+        The non-raw version of this event no longer relies on message cache.
+        Use :func:`on_message_delete` instead.
 
     :param data:
     :type data: :class:`dict`
@@ -1036,6 +1036,78 @@ Roles
 
     :param role: The role that was deleted.
     :type role: :class:`.Role`
+
+.. function:: on_channel_role_override_create(override)
+
+    A role override was created in a channel.
+
+    |nestype| :class:`ChannelRoleOverrideCreateEvent`
+
+    :param override: The override that was created.
+    :type override: :class:`.ChannelRoleOverride`
+
+.. function:: on_raw_channel_role_override_update(override)
+
+    |nesnever|
+
+    A role override was updated.
+
+    :param override: The override after modification.
+    :type override: :class:`.ChannelRoleOverride`
+
+.. function:: on_channel_role_override_update(event)
+
+    |nesonly|
+
+    A role override was updated.
+
+    :param event: The event containing the payload.
+    :type event: :class:`.ChannelRoleOverrideUpdateEvent`
+
+.. function:: on_channel_role_override_delete(override)
+
+    A role override was deleted.
+
+    |nestype| :class:`ChannelRoleOverrideDeleteEvent`
+
+    :param override: The override that was deleted.
+    :type override: :class:`.ChannelRoleOverride`
+
+.. function:: on_category_role_override_create(override)
+
+    A role override was created in a category.
+
+    |nestype| :class:`CategoryRoleOverrideCreateEvent`
+
+    :param override: The override that was created.
+    :type override: :class:`.CategoryRoleOverride`
+
+.. function:: on_raw_category_role_override_update(override)
+
+    |nesnever|
+
+    A role override was updated.
+
+    :param override: The override after modification.
+    :type override: :class:`.CategoryRoleOverride`
+
+.. function:: on_category_role_override_update(event)
+
+    |nesonly|
+
+    A role override was updated.
+
+    :param event: The event containing the payload.
+    :type event: :class:`.CategoryRoleOverrideUpdateEvent`
+
+.. function:: on_category_role_override_delete(override)
+
+    A role override was deleted.
+
+    |nestype| :class:`CategoryRoleOverrideDeleteEvent`
+
+    :param override: The override that was deleted.
+    :type override: :class:`.CategoryRoleOverride`
 
 Webhooks
 ~~~~~~~~~
@@ -1107,6 +1179,78 @@ Users
 
     :param status: The status that was deleted.
     :type status: :class:`.Status`
+
+.. function:: on_channel_user_override_create(override)
+
+    A user override was created in a channel.
+
+    |nestype| :class:`ChannelUserOverrideCreateEvent`
+
+    :param override: The override that was created.
+    :type override: :class:`.ChannelUserOverride`
+
+.. function:: on_raw_channel_user_override_update(override)
+
+    |nesnever|
+
+    A user override was updated.
+
+    :param override: The override after modification.
+    :type override: :class:`.ChannelUserOverride`
+
+.. function:: on_channel_user_override_update(event)
+
+    |nesonly|
+
+    A user override was updated.
+
+    :param event: The event containing the payload.
+    :type event: :class:`.ChannelUserOverrideUpdateEvent`
+
+.. function:: on_channel_user_override_delete(override)
+
+    A user override was deleted.
+
+    |nestype| :class:`ChannelUserOverrideDeleteEvent`
+
+    :param override: The override that was deleted.
+    :type override: :class:`.ChannelUserOverride`
+
+.. function:: on_category_user_override_create(override)
+
+    A user override was created in a category.
+
+    |nestype| :class:`CategoryUserOverrideCreateEvent`
+
+    :param override: The override that was created.
+    :type override: :class:`.CategoryUserOverride`
+
+.. function:: on_raw_category_user_override_update(override)
+
+    |nesnever|
+
+    A user override was updated.
+
+    :param override: The override after modification.
+    :type override: :class:`.CategoryUserOverride`
+
+.. function:: on_category_user_override_update(event)
+
+    |nesonly|
+
+    A user override was updated.
+
+    :param event: The event containing the payload.
+    :type event: :class:`.CategoryUserOverrideUpdateEvent`
+
+.. function:: on_category_user_override_delete(override)
+
+    A user override was deleted.
+
+    |nestype| :class:`CategoryUserOverrideDeleteEvent`
+
+    :param override: The override that was deleted.
+    :type override: :class:`.CategoryUserOverride`
 
 Event Wrappers
 ---------------
@@ -1453,6 +1597,54 @@ these event wrappers closely mirror the payloads provided by the Guilded API.
     :inherited-members:
 
 .. autoclass:: RoleDeleteEvent()
+    :members:
+    :inherited-members:
+
+.. autoclass:: ChannelRoleOverrideCreateEvent()
+    :members:
+    :inherited-members:
+
+.. autoclass:: ChannelRoleOverrideUpdateEvent()
+    :members:
+    :inherited-members:
+
+.. autoclass:: ChannelRoleOverrideDeleteEvent()
+    :members:
+    :inherited-members:
+
+.. autoclass:: ChannelUserOverrideCreateEvent()
+    :members:
+    :inherited-members:
+
+.. autoclass:: ChannelUserOverrideUpdateEvent()
+    :members:
+    :inherited-members:
+
+.. autoclass:: ChannelUserOverrideDeleteEvent()
+    :members:
+    :inherited-members:
+
+.. autoclass:: CategoryRoleOverrideCreateEvent()
+    :members:
+    :inherited-members:
+
+.. autoclass:: CategoryRoleOverrideUpdateEvent()
+    :members:
+    :inherited-members:
+
+.. autoclass:: CategoryRoleOverrideDeleteEvent()
+    :members:
+    :inherited-members:
+
+.. autoclass:: CategoryUserOverrideCreateEvent()
+    :members:
+    :inherited-members:
+
+.. autoclass:: CategoryUserOverrideUpdateEvent()
+    :members:
+    :inherited-members:
+
+.. autoclass:: CategoryUserOverrideDeleteEvent()
     :members:
     :inherited-members:
 
@@ -2480,6 +2672,30 @@ Data Classes
 Below are some classes that primarily just wrap data. You are able to create
 most of these yourself.
 
+ChannelRoleOverride
+~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: ChannelRoleOverride()
+    :members:
+
+ChannelUserOverride
+~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: ChannelUserOverride()
+    :members:
+
+CategoryRoleOverride
+~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: CategoryRoleOverride()
+    :members:
+
+CategoryUserOverride
+~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: CategoryUserOverride()
+    :members:
+
 Embed
 ~~~~~~
 
@@ -2502,6 +2718,12 @@ Permissions
 ~~~~~~~~~~~~
 
 .. autoclass:: Permissions()
+    :members:
+
+PermissionOverride
+~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: PermissionOverride()
     :members:
 
 RawReactionActionEvent

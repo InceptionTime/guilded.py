@@ -28,8 +28,8 @@ from typing_extensions import NotRequired
 
 from .announcement import Announcement, AnnouncementComment
 from .calendar_event import CalendarEvent, CalendarEventComment, CalendarEventRsvp
-from .category import Category
-from .channel import ServerChannel
+from .category import Category, ChannelCategoryRolePermission, ChannelCategoryUserPermission
+from .channel import ChannelRolePermission, ChannelUserPermission, ServerChannel
 from .doc import Doc, DocComment
 from .emote import Emote
 from .forum_topic import ForumTopic, ForumTopicComment
@@ -93,6 +93,7 @@ class BotServerMembershipDeletedEvent(TypedDict):
 
 class ServerMemberJoinedEvent(_ServerEvent):
     member: ServerMember
+    serverMemberCount: int
 
 
 class ServerMemberRemovedEvent(_ServerEvent):
@@ -239,6 +240,22 @@ class ChannelMessageReactionManyDeletedEvent(_ServerEvent):
     deletedBy: str
     count: int
     emote: NotRequired[Emote]
+
+
+class ChannelRolePermissionEvent(_ServerEvent):
+    channelRolePermission: ChannelRolePermission
+
+
+class ChannelUserPermissionEvent(_ServerEvent):
+    channelUserPermission: ChannelUserPermission
+
+
+class ChannelCategoryRolePermissionEvent(_ServerEvent):
+    channelCategoryRolePermission: ChannelCategoryRolePermission
+
+
+class ChannelCategoryUserPermissionEvent(_ServerEvent):
+    channelCategoryUserPermission: ChannelCategoryUserPermission
 
 
 class UserStatusCreatedEvent(TypedDict):
